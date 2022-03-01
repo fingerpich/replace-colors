@@ -1,0 +1,14 @@
+label {
+  margin: 1rem;
+  white-space: nowrap;
+  width: 80px;
+  display: block;
+  flex: auto;
+  display: flex;
+  justify-content: end;
+}
+#existColors{
+  width: 340px;
+  display: flex;
+  flex-wrap: wrap;
+}
