@@ -24,12 +24,15 @@ function replaceColorsList(oldColors, newColors) {
     obj[color.toLowerCase()] = newColors[index]
     return obj
   }, {})
-  const regexEscape = color => color.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')
+  const regexEscape = color => color.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')+'[\\s;,}!\\)]'
     // .replace('0\\.','0?\\.')
     // .replace(',','\\s*,\\s*')
   const reg = new RegExp(oldColors.map(regexEscape).join("|"), 'gi')
   Array.from(styles).forEach((style) => {
-    style.innerHTML = style.innerHTML.replace(reg, (matched) => mapObj[matched.toLowerCase()]);
+    style.innerHTML = style.innerHTML.replace(reg, (matched) => {
+      const m = matched.toLowerCase()
+      return mapObj[m] || mapObj[m.slice(0, -1)]
+    });
   })
 }
 
