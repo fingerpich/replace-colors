@@ -2,11 +2,27 @@
 <html>
   <head>
     <link rel="stylesheet" href="popup.css">
-    <script src="popup.js"></script>
+    <script type="module" src="main.js"></script>
   </head>
   <body>
     <div class="tools">
-
+      <label for="hue">
+        Hue
+        <input type="range" min="0" max="360" value="0" class="slider" id="hue">
+      </label>
+      <label for="saturation">
+        Saturation
+        <input type="range" min="-100" max="100" value="0" class="slider" id="saturation">
+      </label>
+      <label for="lightness">
+        Lightness
+        <input type="range" min="-100" max="100" value="0" class="slider" id="lightness">
+      </label>
+      <label for="invert">
+        Invert
+        <input type="range" min="0" max="150" value="0" class="slider" id="invert">
+      </label>
+      
     </div>
     <div id="colorsList" class="">
 

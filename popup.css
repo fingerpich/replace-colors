@@ -47,3 +47,10 @@
   border: none;
   background-color: white;
 }
+.tools label{
+  display: flex;
+  align-items: center;
+}
+.tools label input{
+  flex: 1;
+}
