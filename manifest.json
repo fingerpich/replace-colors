@@ -3,6 +3,8 @@
   "description": "Helps you to change or create a theme",
   "version": "1.0",
   "manifest_version": 3,
-  "devtools_page": "devtools.html",
+  "action": {
+    "default_popup": "popup.html"
+  },
   "permissions": ["storage", "activeTab", "scripting"]
 }

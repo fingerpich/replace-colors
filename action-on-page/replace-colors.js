@@ -1,71 +1,47 @@
 import { runFunctionInPage } from "./extension.js"
-import { fetchedColors, namedColors } from "../color.js"
+import { fetchedColors } from "../color.js"
+import { numberToHex2 } from "../convert-color.js";
+import { getOriginCssText, getTempCssText, replaceAColor, replaceAllColors, setTempCssText } from "../css.js";
 
 export function changeColorsList() {
-  const lastColors = fetchedColors.map(fetchColor => fetchColor.lastColor)
-  const lookup = {}
-  const newColors = fetchedColors.map(fetchColor => {
-    const c = (fetchColor.alpha < 1) ? 
-      (fetchColor.newColor + (fetchColor.alpha * 255).toString(16)) : 
-      fetchColor.newColor
+  const lookup = {} // prevents colors to be duplicated
+  const newColors = fetchedColors.map(colorObj => {
+    const c = (colorObj.alpha < 1) ? 
+      (colorObj.newColor + numberToHex2(Math.round(colorObj.alpha * 255))) : 
+      colorObj.newColor
     if (!lookup[c]) { lookup[c] = 1; }
-    else { return fetchColor.lastColor }
-    return c;
+    else { return colorObj.lastColor }
+    return c
   })
-  newColors.forEach((c, index) => {
+  const colorsMap = newColors.reduce((obj, c, index) => {
+    obj[fetchedColors[index].origin] = c
     fetchedColors[index].lastColor = c
-  })
-  return runFunctionInPage(replaceColorsList, [lastColors, newColors])
-}
-
-function replaceColorsList(oldColors, newColors) {
-  const styles = document.getElementsByTagName('style')
-  const mapObj = oldColors.reduce((obj, color, index) => {
-    obj[color.toLowerCase()] = newColors[index]
     return obj
   }, {})
-  const regexEscape = color => color.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')+'[\\s;,}!\\)]'
-    // .replace('0\\.','0?\\.')
-    // .replace(',','\\s*,\\s*')
-  const reg = new RegExp(oldColors.map(regexEscape).join("|"), 'gi')
-  Array.from(styles).forEach((style) => {
-    style.innerHTML = style.innerHTML.replace(reg, (matched) => {
-      const m = matched.toLowerCase()
-      return mapObj[m] || mapObj[m.slice(0, -1)]
-    });
-  })
+  const newCss = replaceAllColors(getOriginCssText(), colorsMap)
+  setTempCssText(newCss)
+  return runFunctionInPage(upsertColorStyle, [newCss])
 }
 
-export function changeColor(fetchColor) {
-  let newColor = fetchColor.newColor
-  if (fetchColor.alpha < 1) {
-    newColor = fetchColor.newColor + (fetchColor.alpha * 255).toString(16)
+export function changeAColor(colorObj) {
+  let newColor = colorObj.newColor
+  if (colorObj.alpha < 1) {
+    newColor = colorObj.newColor + numberToHex2(colorObj.alpha * 255)
   }
-
-  if (fetchedColors.find(fColor => fColor.lastColor === fetchColor.newColor)) { return }
-  const lastColor = fetchColor.lastColor
-  fetchColor.lastColor = newColor
-  return runFunctionInPage(replaceColor, [lastColor, newColor])
+  
+  if (fetchedColors.find(thisColorObj => thisColorObj.lastColor === colorObj.newColor)) { return }
+  const newCss = replaceAColor(getTempCssText(), colorObj.lastColor, newColor)
+  setTempCssText(newCss)
+  colorObj.lastColor = newColor
+  return runFunctionInPage(upsertColorStyle, [newCss])
 }
 
-function replaceColor(oldColor, newColor) {
-  const styles = document.getElementsByTagName('style')
-  const needsToBeCheckedWithPostfix = !(/rgba?\(|hsla?\(|#([0-9a-fA-F]{2}){3,4}/ig.test(oldColor))
-  const regexp = needsToBeCheckedWithPostfix ? `(${oldColor})([\\s;,}!\\)])`:
-    oldColor.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')
-    // .replace('0\\.','0?\\.')
-    // .replace(',','\\s*,\\s*')
-  const reg = new RegExp(regexp, 'ig')
-  console.log(reg)
-  Array.from(styles).forEach((style) => {
-    let html = style.innerHTML
-    if(needsToBeCheckedWithPostfix) {
-      html = html.replace(reg, (first, oldColor, postfixChar) => {
-        return newColor + postfixChar
-      })
-    } else {
-      html = html.replace(reg, newColor)
-    }
-    style.innerHTML = html
-  })
+function upsertColorStyle(cssText) {
+  let ourStyle = document.getElementById('changedStyle')
+  if (!ourStyle) {
+    ourStyle = document.createElement('style')
+    ourStyle.id = 'changedStyle'
+    document.body.appendChild(ourStyle)
+  }
+  ourStyle.innerHTML = cssText
 }
