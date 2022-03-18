@@ -37,7 +37,7 @@ export function replaceAllColors(cssText, replaceObj) {
     if (!replaceObj[color]) {
       console.error(color + ' is not a match')
     }
-    return replaceObj[color] || match
+    return replaceObj[color] ? match.replace(color, replaceObj[color]) : match
   })
   return newCssText
 }
